@@ -65,11 +65,17 @@ class Generator:
         self.value +=self.increment
         if self.value>self.wrap:
             self.value = (self.value - self.wrap)
+        if self.value > self.wrap:
+            #stop it blowing up
+            self.value = 0.0
         if self.value < 0.0:
             self.value =0.0
         return (self.value*self.scale)
 
     def set_increment(self, new_increment):
+        #increment has to be less than 2.0
+        if new_increment > 1.9:
+            new_increment = 1.9
         self.increment = new_increment
         return
     def set_scale(self, new_scale):

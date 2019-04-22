@@ -23,12 +23,12 @@ def red_speed_handler(unused_addr, args):
     return
 
 def green_speed_handler(unused_addr, args):
-    value = int(args)/100.0
+    value = int(args)/220.0
     grnGen.set_increment(value)
     return
 
 def blue_speed_handler(unused_addr, args):
-    value = int(args)/100.0
+    value = int(args)/220.0
     bluGen.set_increment(value)
     return
 
@@ -77,15 +77,18 @@ def draw_scene(screen):
         this_pixel = get_colour()
         YX = AASHF.char_index_to_YX(screen, i)
         screen.print_at(" ", YX[1], YX[0],colour=7, bg=this_pixel)
-    screen.print_at("{} {} {} {} ".format(bluGen.value, redGen.value, grnGen.value, this_pixel), 0,0,colour=7)
+    screen.print_at("{:.2f} {:.2f} {:.2f} ".format(redGen.increment, grnGen.increment, bluGen.increment), 0,0,colour=7)
     
-    screen.print_at("{} {} {}".format(redGen.increment, redGen.scale, red_offset), 0,3,colour=7)
+    #screen.print_at("{} {} {}".format(redGen.increment, redGen.scale, red_offset), 0,3,colour=7)
     
     screen.refresh()
 
 def ds(screen):
     while True:
         draw_scene(screen)
+        ev = screen.get_key()
+        if ev in (ord('Q'), ord('q')):
+            return
         time.sleep(0.1)
     return
 
@@ -102,13 +105,16 @@ def setup_OSC():
     disp.map("/blue/scale", blue_scale_handler)
 
     server = osc_server.ThreadingOSCUDPServer(
-            ("127.0.0.1",8000), disp)
+            ("192.168.43.23",8000), disp)
     server_thread = threading.Thread(target = server.serve_forever)
     server_thread.start()
+    return server, server_thread
 
 
 
-setup_OSC()
+s = setup_OSC()
 Screen.wrapper(ds)
+s[0].shutdown()
+quit()
 
 

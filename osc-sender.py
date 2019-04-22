@@ -4,7 +4,7 @@ from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
 
-client=udp_client.SimpleUDPClient("127.0.0.1",8000)
+client=udp_client.SimpleUDPClient("192.168.43.246",9000)
 
 dest = [
     "/red/scale",

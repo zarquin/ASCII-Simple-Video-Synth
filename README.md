@@ -8,7 +8,7 @@ some example videos are here:
 <colours> = red, green or blue
 
 the synth responds to OSC commands at:
-* /<colour>/speed
-* /<colour>/mode
-* /<colour>/offset
-* /<colour>/scale
+* `/<colour>/speed`
+* `/<colour>/mode`
+* `/<colour>/offset`
+* `/<colour>/scale`

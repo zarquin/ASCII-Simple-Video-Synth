@@ -12,3 +12,8 @@ the synth responds to OSC commands at:
 * `/<colour>/mode`
 * `/<colour>/offset`
 * `/<colour>/scale`
+
+
+There is a TouchOSC control interface.
+it looks like 
+![TouchOSC Interface](https://github.com/zarquin/ASCII-Simple-Video-Synth/blob/master/TouchOSC-Interface.jpeg?raw=true)

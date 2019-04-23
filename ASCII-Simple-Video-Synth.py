@@ -1,3 +1,12 @@
+"""
+ASCII-Simple-Video-Synth
+A simple ASCII terminal code video synth. 
+zarquin@ucc.asn.au
+(c) 2019
+See LICENSE for licence details
+"""
+
+
 from asciimatics.screen import Screen
 import asciimatics
 import AASHF

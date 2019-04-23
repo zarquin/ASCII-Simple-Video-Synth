@@ -1,6 +1,8 @@
 """
 helper file for ascii art synth generation.
-
+zarquin@ucc.asn.au
+(c) 2019
+See LICENSE for licence details
 """
 import time, os
 

@@ -77,6 +77,13 @@ class Generator:
         self.run=True
         return
 
+    def get_shaped_value(self):
+        if self.value < self.shape:
+            return self.value / self.shape
+        else:
+            shaped = 1 - ((self.value - self.shape)* ( 1. / (1.-self.shape) ) )
+            return shaped
+    
     def calculate_and_limit(self):
         ret_val = 0
         ret_val = int(self.value * self.scale)

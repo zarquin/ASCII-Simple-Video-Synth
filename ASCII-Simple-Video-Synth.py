@@ -18,9 +18,9 @@ import threading
 
 import argparse
 
-redGen = Generator(1.0,0.01,255.0)
-bluGen = Generator(1.0,0.002,255.0)
-grnGen = Generator(1.0,0.001,255.0)
+redGen = Generator(0.1,0.01,255.0)
+bluGen = Generator(0.3,0.002,255.0)
+grnGen = Generator(0.5,0.001,255.0)
 
 
 def speed_handler(unused_addr, args, val):
@@ -61,21 +61,58 @@ def draw_scene(screen):
         if YX[1] == 0:
             line_reset()
         screen.print_at(" ", YX[1], YX[0],colour=7, bg=this_pixel)
-    screen.print_at("{:.2f} {:.2f} {:.2f} ".format(redGen.increment, grnGen.increment, bluGen.increment), 0,0,colour=7)
-    screen.print_at("{} {} {} ".format(redGen.mode, grnGen.mode, bluGen.mode), 25,0,colour=7)
+    #screen.print_at("{:.2f} {:.2f} {:.2f} ".format(redGen.increment, grnGen.increment, bluGen.increment), 0,0,colour=7)
+    #screen.print_at("{} {} {} ".format(redGen.mode, grnGen.mode, bluGen.mode), 25,0,colour=7)
     
-    #screen.print_at("{} {} {}".format(redGen.increment, redGen.scale, red_offset), 0,3,colour=7)
-    
+    #screen.print_at("{} {} {}".format(redGen.increment, redGen.scale, red_offset), 0,3,colour=7) 
     screen.refresh()
 
+def add_debug_info(screen):
+    i=1
+    egw = ["red","grn","blu"]
+    ee = [redGen, grnGen,  bluGen ]
+    for q in range(3):
+        j = ee[q]
+        text_str = "{} val: {:.4f} inc: {:.3f} shp: {:.2f} mde: {:1}".format(egw[q],j.value, j.increment, j.shape, j.mode)
+        screen.print_at(text_str, 0, screen.height-i ,colour=7 )
+        i+=1
+    screen.refresh()
+    return
+
 def ds(screen):
+    verbose = False
+    runrun=True
+    debug=False
     while True:
-        draw_scene(screen)
+        if runrun:
+            draw_scene(screen)
+            if debug:
+                runrun = False
+        if verbose:
+            add_debug_info(screen)
+
         ev = screen.get_key()
+        
+        if ev in (ord('v'), ord('V')):
+            if verbose:
+                verbose = False
+            else:
+                verbose = True
+        
         if ev in (ord('Q'), ord('q')):
             return
-        time.sleep(0.1)
+        if ev in (ord('d'), ord('D')):
+            if debug:
+                debug=False
+            else:
+                debug=True
+        if ev in (ord('f'), ord('F')):
+            runrun = True
+        
+        time.sleep(0.03)
     return
+
+
 
 def setup_OSC(new_ip, new_port):
     disp = dispatcher.Dispatcher()
@@ -105,7 +142,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip", default="127.0.0.1",
       help="The ip of the OSC server")
-    parser.add_argument("--port", type=int, default=5005,
+    parser.add_argument("--port", type=int, default=8000,
       help="The port the OSC server is listening on")
     args = parser.parse_args()
 

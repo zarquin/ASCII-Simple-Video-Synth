@@ -61,7 +61,7 @@ class Generator:
     # 4 oneshot, hold at 0 reset on frame
     # 5 oneshot, hold at 1, rest on line
     # 6 oneshot, hold at 1, reset on frame
-    def __init__(self, shape, increment=0.01, scale=255, offset=0,mode=0):
+    def __init__(self, shape=0.5, increment=0.01, scale=255, offset=0,mode=0):
         self.shape = shape
         self.increment = increment
         self.value = 0.0
@@ -86,7 +86,7 @@ class Generator:
     
     def calculate_and_limit(self):
         ret_val = 0
-        ret_val = int(self.value * self.scale)
+        ret_val = int(self.get_shaped_value() * self.scale)
         ret_val = ret_val+self.offset
         if ret_val > 255:
             ret_val = 255
@@ -146,8 +146,22 @@ class Generator:
         self.offset = new_offset
         return
 
+    def set_increment_8bit(self,new_increment):
+        # this is for setting the increment using a 0-255 bit value.
+        if new_increment > 255:
+            new_increment = 255
+        if new_increment < 0:
+            new_increment = 0
+        
+
     def set_increment(self, new_increment):
         #increment has to be less than 2.0
+
+        #increment value of 255 = 1.0
+        #increment value of 0 = 1.0/(chart_count*2)
+
+
+
         if new_increment > 1.9:
             new_increment = 1.9
         self.increment = new_increment

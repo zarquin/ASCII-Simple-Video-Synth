@@ -4,7 +4,7 @@ zarquin@ucc.asn.au
 (c) 2019
 See LICENSE for licence details
 """
-import time, os
+import time, os, math
 
 def col255_from_RGB(red,green,blue):
     """ returns a term256 colour index from RGB value
@@ -70,6 +70,7 @@ class Generator:
         self.offset = offset
         self.mode = mode
         self.run = True
+        self.last_value = 0.0
         return
 
     def reset(self, new_value=0):
@@ -92,6 +93,7 @@ class Generator:
             ret_val = 255
         if ret_val <0:
             ret_val = 0
+        self.last_value = ret_val
         return ret_val
 
     def next(self):
@@ -152,15 +154,31 @@ class Generator:
             new_increment = 255
         if new_increment < 0:
             new_increment = 0
+
+        new_increment+=1
+        jif = math.log(new_increment,256)
+        jif = abs(jif)
+        self.increment = jif
+        return
+
         
+    def set_shape_8bit(self, new_shape):
+
+        if new_shape > 255:
+            new_shape = 255
+        if new_shape < 0:
+            new_shape = 0
+        
+        self.shape = new_shape / 255.0
+        return
+
+
 
     def set_increment(self, new_increment):
         #increment has to be less than 2.0
 
         #increment value of 255 = 1.0
         #increment value of 0 = 1.0/(chart_count*2)
-
-
 
         if new_increment > 1.9:
             new_increment = 1.9

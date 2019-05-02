@@ -22,6 +22,8 @@ redGen = Generator(0.1,0.01,255.0)
 bluGen = Generator(0.3,0.002,255.0)
 grnGen = Generator(0.5,0.001,255.0)
 
+single_draw_delay = False
+
 
 def speed_handler(unused_addr, args, val):
     value = int(val)/240.0
@@ -54,6 +56,7 @@ def line_reset():
     return
 
 def draw_scene(screen):
+    global single_draw_delay
     frame_reset()
     for i in range( AASHF.char_count(screen)):
         this_pixel = get_colour()
@@ -61,11 +64,24 @@ def draw_scene(screen):
         if YX[1] == 0:
             line_reset()
         screen.print_at(" ", YX[1], YX[0],colour=7, bg=this_pixel)
-    #screen.print_at("{:.2f} {:.2f} {:.2f} ".format(redGen.increment, grnGen.increment, bluGen.increment), 0,0,colour=7)
-    #screen.print_at("{} {} {} ".format(redGen.mode, grnGen.mode, bluGen.mode), 25,0,colour=7)
+        if single_draw_delay:
+            add_debug_info(screen)
+            add_single_debug_info(screen, this_pixel, YX)
+            screen.refresh()
+            time.sleep(0.2)
     
-    #screen.print_at("{} {} {}".format(redGen.increment, redGen.scale, red_offset), 0,3,colour=7) 
+    #if we're drawing a single pixel at a time, once we've drawn the screen, stop.
+    if single_draw_delay:
+        single_draw_delay = False
+
     screen.refresh()
+    return
+
+def add_single_debug_info(screen, pixel_value, XY):
+    text_str = "colour {:3} R: {:3} G:{:3} B:{:3} X: {:3} Y: {:3} ".format(pixel_value, 
+                                redGen.last_value, grnGen.last_value, bluGen.last_value, XY[1], XY[0])
+    screen.print_at(text_str, 0, screen.height-4 ,colour=7 )
+
 
 def add_debug_info(screen):
     i=1
@@ -73,7 +89,8 @@ def add_debug_info(screen):
     ee = [redGen, grnGen,  bluGen ]
     for q in range(3):
         j = ee[q]
-        text_str = "{} val: {:.4f} inc: {:.3f} shp: {:.2f} mde: {:1}".format(egw[q],j.value, j.increment, j.shape, j.mode)
+        text_str = "{} val: {:.4f} inc: {:.3f} shp: {:.2f} mde: {:1} scl: {:3} off: {:3}".format(egw[q],j.value, 
+                                                                            j.increment, j.shape, j.mode, j.scale, j.offset)
         screen.print_at(text_str, 0, screen.height-i ,colour=7 )
         i+=1
     screen.refresh()
@@ -83,6 +100,9 @@ def ds(screen):
     verbose = False
     runrun=True
     debug=False
+    global single_draw_delay
+    single_draw_delay = False
+
     while True:
         if runrun:
             draw_scene(screen)
@@ -99,8 +119,13 @@ def ds(screen):
             else:
                 verbose = True
         
+        if ev in (ord('S'), ord('s')):
+            single_draw_delay = True
+            runrun = True
+
         if ev in (ord('Q'), ord('q')):
             return
+
         if ev in (ord('d'), ord('D')):
             if debug:
                 debug=False
@@ -126,9 +151,13 @@ def setup_OSC(new_ip, new_port):
     disp.map("/blue/offset", standard_handler, bluGen.set_offset)
     disp.map("/blue/scale", standard_handler, bluGen.set_scale)
 
-    disp.map("/red/speed",speed_handler,redGen.set_increment)
-    disp.map("/green/speed",speed_handler,grnGen.set_increment)
-    disp.map("/blue/speed",speed_handler,bluGen.set_increment)
+    disp.map("/blue/shape", standard_handler, bluGen.set_shape_8bit)
+    disp.map("/green/shape", standard_handler, grnGen.set_shape_8bit)
+    disp.map("/red/shape", standard_handler, redGen.set_shape_8bit)
+
+    disp.map("/red/speed",speed_handler,redGen.set_increment_8bit)
+    disp.map("/green/speed",speed_handler,grnGen.set_increment_8bit)
+    disp.map("/blue/speed",speed_handler,bluGen.set_increment_8bit)
 
     server = osc_server.ThreadingOSCUDPServer(
             (new_ip,new_port), disp)

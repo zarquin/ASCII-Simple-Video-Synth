@@ -170,6 +170,8 @@ class Generator:
             new_shape = 0
         
         self.shape = new_shape / 255.0
+        if self.shape >=1.0:
+            self.shape =0.999
         return
 
 

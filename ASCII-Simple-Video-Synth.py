@@ -66,14 +66,14 @@ def draw_scene(screen):
         YX = AASHF.char_index_to_YX(screen, i)
         if YX[1] == 0:
             line_reset()
-            bg = this_pixel
-            attr = 0
-            if sys.platform == "win32":
-                # on Windows, this_pixel is a 4 bit colour index value
-                # we need to extract both the colour value and intensity separately
-                bg = this_pixel >> 1
-                attr = this_pixel & 1
-            screen.print_at(" ", YX[1], YX[0],colour=7, attr=attr, bg=bg)
+        bg = this_pixel
+        attr = 0
+        if sys.platform == "win32":
+            # on Windows, this_pixel is a 4 bit colour index value
+            # we need to extract both the colour value and intensity separately
+            bg = this_pixel >> 1
+            attr = this_pixel & 1
+        screen.print_at(" ", YX[1], YX[0],colour=7, attr=attr, bg=bg)
         if single_draw_delay:
             add_debug_info(screen)
             add_single_debug_info(screen, this_pixel, YX)

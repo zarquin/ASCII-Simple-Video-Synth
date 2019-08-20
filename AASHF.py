@@ -97,6 +97,155 @@ def char_index_to_YX(screen, index):
     cols = index % maxtup[1]
     return ( lines, cols)
 
+class ShapePoints:
+    #this method creats a multipoint polygon using two sinewave generators.
+    # Lissajous method.
+    # the points are evenly selected from around the time.  e.g. the points are from 0 -> 2Pi.
+    # x = sine(t + starting_offset) etc.
+    # the starting offset will allow for a nice rotation frame to frame.
+
+    def __init__(self, sides=3, xincrement=0.01, size=0.5, yincrement=0.01, screen_x=80, screen_y=24):
+        self.size=size
+        self.sides=sides
+        self.xincrement=xincrement
+        self.yinrement=yincrement
+        self.mode = 0
+        self.run=True
+        self.lastx = 0.0
+        self._xvalue = self.lastx
+        self.lasty = 0.0
+        self._yvalue = self.lasty
+        self.noise = 0.0
+        self.screen_x = screen_x
+        self.screen_y = screen_y
+        return
+    
+    def saw_to_tri(self, arg_val):
+        # -2 to -1 is 0 -> -1 counting down.  
+        # -1 to +1 is counting up.
+        # +1 to +2 is +1 -> 0 counting down.
+        if arg_val > 2.0:
+            arg_val = 2.0
+        if arg_val < -2.0:
+            arg_val = -2.0
+
+        if arg_val < -1.0:
+            return( -1.0 - arg_val)
+        if arg_val > 1.0:
+            return ( 1.0 - (arg_val -1.0)  )
+
+        return arg_val
+
+    def update_points(self):
+        #this is a dumb triangle wave oscillator 
+        # output is -1 to +1.
+        # rather than having a private variable for direction, we will count as a sawtooth from -2 to +2
+        # -2 to -1 is 0 -> -1 counting down.  
+        # -1 to +1 is counting up.
+        # +1 to +2 is +1 -> 0 counting down.
+        # when gets to +2 resets to -2
+        self._xvalue += self.xincrement
+        if self._xvalue > 2.0:
+            self._xvalue = self._xvalue - 4.0
+        self._yvalue += self.yinrement
+        if self._yvalue > 2.0:
+            self._yvalue = self._yvalue - 4.0
+        
+        self.lastx = self.saw_to_tri(self._xvalue)
+        self.lasty = self.saw_to_tri(self._yvalue)
+
+    def points_to_screen_locations(self):
+        #this returns an x y tuple in relation to the size of the screen
+        xc = self.screen_x/2
+        yc = self.screen_y/2
+
+        max_x = int((self.screen_x/2) * self.size )
+        max_y = int((self.screen_y/2) * self.size )
+
+        xc = int(max_x*self.lastx + xc)
+        yc = int(max_y*self.lasty + yc)
+
+        #could put in bounds checking here.  i don't want to to see what it does.
+        return (xc, yc)
+
+    def get_points(self):
+        #this method returns an array of x,y tuples
+        #the number of points is based on the sides variable.
+        ret_val = [] #empty dictionary
+        for j in range(self.sides):
+            self.update_points()
+            ret_val.append(self.points_to_screen_locations())
+        return ret_val
+
+
+    def set_xincrement8bit(self, new_inc):
+        
+        incval = new_inc/ 127.0
+        self.set_xincrement(incval)
+        return
+
+    def set_xincrement(self, new_xinc):      
+        if new_xinc < 0:
+            new_xinc = 0
+        if new_xinc > 2.0:
+            new_xinc = 2.0
+        self.xincrement = new_xinc
+        return
+
+    def set_yincrement8bit(self, new_inc):
+        
+        incval = new_inc/ 127.0
+        self.set_yincrement(incval)
+        return
+
+    def set_yincrement(self, new_yinc):
+        if new_yinc > 2.0:
+            new_yinc = 2.0
+        if new_yinc < 0:
+            new_yinc = 0
+            
+        self.yinrement = new_yinc
+        return
+
+
+    def set_size8bit(self, newval):
+        size = newval/255.0
+        self.size = size
+        return
+
+    def set_size(self, new_size, screen_x, screen_y):
+        # a size of 1 = either height/2 or width/2 as this is 
+        # currently based around a centre of the screen point.
+        if new_size <0:
+            new_size = 0.0
+        if new_size > 1.0:
+            new_size = 1.0
+        self.size = new_size
+        self.screen_x = screen_x
+        self.screen_y = screen_y
+        return
+
+    def set_sides8bit(self, newsides):
+        # 0 = 3
+        # 255 = 10
+        # 0 = 0 255=7
+        # +3 
+        newsides = newsides/35
+        newsides +=3
+        self.set_sides(newsides)
+        return
+
+    def set_sides(self, new_sides):
+        #set the number of sides on the shapes.
+        # less than 3 is a bit silly.  more than 10 is also probably a bit hard.
+        new_sides = int(new_sides)
+        if new_sides <3:
+            new_sides = 3
+        if new_sides > 10:
+            new_sides = 10
+        self.sides = new_sides
+        return
+
 class Generator:
     #modes
     # 0 freerun

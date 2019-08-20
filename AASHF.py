@@ -38,6 +38,51 @@ def col255_from_RGB(red,green,blue):
         j=255
     return j 
 
+# The following 4 methods are taken/adapted from:
+# https://stackoverflow.com/questions/41644778/convert-24-bit-color-to-4-bit-rgbi
+
+# find the closest RGBx approximation of a 24-bit RGB color, for x = 0 or 1
+def rgbx_approx(red, green, blue, x):
+    threshold = (x + 1) * 255 / 3
+    r = 1 if (red > threshold) else 0
+    g = 1 if (green > threshold) else 0
+    b = 1 if (blue > threshold) else 0
+    return (r, g, b)
+
+# convert a 4-bit RGBI color back to 24-bit RGB
+def rgbi_to_rgb24(r, g, b, i):
+   red = (2*r + i) * 255 / 3
+   green = (2*g + i) * 255 / 3
+   blue = (2*b + i) * 255 / 3
+   return (red, green, blue)
+
+
+# return the (squared) Euclidean distance between two RGB colors
+def color_distance(red_a, green_a, blue_a, red_b, green_b, blue_b):
+   d_red = red_a - red_b
+   d_green = green_a - green_b
+   d_blue = blue_a - blue_b
+   return (d_red * d_red) + (d_green * d_green) + (d_blue * d_blue)
+
+# find the closest 4-bit RGBI approximation (by Euclidean distance) to a 24-bit RGB color
+def col15_from_RGB(red, green, blue):
+    # find best RGB0 and RGB1 approximations:
+    (r0, g0, b0) = rgbx_approx(red, green, blue, 0);
+    (r1, g1, b1) = rgbx_approx(red, green, blue, 1);
+
+    # convert them back to 24-bit RGB:
+    (red0, green0, blue0) = rgbi_to_rgb24(r0, g0, b0, 0);
+    (red1, green1, blue1) = rgbi_to_rgb24(r1, g1, b1, 1);
+
+    # return the color closer to the original:
+    d0 = color_distance(red, green, blue, red0, green0, blue0);
+    d1 = color_distance(red, green, blue, red1, green1, blue1);
+    out = 0
+    rgbi = [r0, g0, b0, 0] if (d0 <= d1) else [r1, g1, b1, 1]
+    for bit in rgbi:
+        out = (out << 1) | bit
+    return out
+
 def char_count(screen):
     return screen.dimensions[0]*screen.dimensions[1]
 

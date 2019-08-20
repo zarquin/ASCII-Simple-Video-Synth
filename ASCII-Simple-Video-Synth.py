@@ -15,6 +15,7 @@ from pythonosc import dispatcher
 from pythonosc import osc_server
 import time
 import threading
+import sys
 
 import argparse
 
@@ -46,13 +47,17 @@ def get_colour():
     red = int(redGen.next() )
     green = int (grnGen.next() )
     blue = int(bluGen.next() )
-
+    
     #update the average values
     avgBlu = (avgBlu + blue )/2
     avgGrn = (avgGrn+ green)/2
     avgRed = (avgRed + red)/2
+    
+    if sys.platform == "win32":
+        return AASHF.col15_from_RGB(red, green, blue)
+    else:
+        return AASHF.col255_from_RGB(red,green,blue)
 
-    return AASHF.col255_from_RGB(red,green,blue)
 
 def frame_reset():
     redGen.frame_reset()
@@ -107,7 +112,14 @@ def draw_scene(screen):
         YX = AASHF.char_index_to_YX(screen, i)
         if YX[1] == 0:
             line_reset()
-        screen.print_at(" ", YX[1], YX[0],colour=7, bg=this_pixel)
+        bg = this_pixel
+        attr = 0
+        if sys.platform == "win32":
+            # on Windows, this_pixel is a 4 bit colour index value
+            # we need to extract both the colour value and intensity separately
+            bg = this_pixel >> 1
+            attr = this_pixel & 1
+        screen.print_at(" ", YX[1], YX[0],colour=7, attr=attr, bg=bg)
         if single_draw_delay:
             add_debug_info(screen)
             add_single_debug_info(screen, this_pixel, YX)

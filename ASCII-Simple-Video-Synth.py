@@ -10,7 +10,7 @@ See LICENSE for licence details
 from asciimatics.screen import Screen
 import asciimatics
 import AASHF
-from AASHF import Generator
+from AASHF import Generator, ShapePoints
 from pythonosc import dispatcher
 from pythonosc import osc_server
 import time
@@ -21,6 +21,12 @@ import argparse
 redGen = Generator(0.1,0.01,255.0)
 bluGen = Generator(0.3,0.002,255.0)
 grnGen = Generator(0.5,0.001,255.0)
+
+avgGrn = 0
+avgRed = 0
+avgBlu = 0
+
+shape_drawer = ShapePoints(sides=4, xincrement=0.7, yincrement=0.999, size=0.7)
 
 single_draw_delay = False
 
@@ -35,11 +41,16 @@ def standard_handler(unused_addr, args, val):
     args[0](value)
     return
 
-
 def get_colour():
+    global avgBlu, avgGrn, avgRed
     red = int(redGen.next() )
     green = int (grnGen.next() )
     blue = int(bluGen.next() )
+
+    #update the average values
+    avgBlu = (avgBlu + blue )/2
+    avgGrn = (avgGrn+ green)/2
+    avgRed = (avgRed + red)/2
 
     return AASHF.col255_from_RGB(red,green,blue)
 
@@ -55,8 +66,41 @@ def line_reset():
     bluGen.line_reset()
     return
 
+def reset_average():
+    global avgBlu, avgGrn , avgRed
+    avgBlu = 0
+    avgGrn = 0
+    avgRed = 0
+
+def get_compliment_of_average():
+    #convert average to HSI
+    # we want a high contrast colour for the shape.
+    # and then a complimentary value for the bg for the shape.
+
+    # temporary colour values 
+    tr=255
+    tb=255
+    tg =255
+
+    if avgRed > 126:
+        tr = 0
+    if avgBlu > 126:
+        tb = 0
+    if avgGrn > 126:
+        tg = 0
+    
+    if tg+tb+tr > 382:
+        bg = Screen.COLOUR_BLACK
+    else: 
+        bg = Screen.COLOUR_WHITE
+
+    fg = AASHF.col255_from_RGB(tr,tg,tb)
+
+    return (fg , bg)
+
 def draw_scene(screen):
     global single_draw_delay
+    reset_average()
     frame_reset()
     for i in range( AASHF.char_count(screen)):
         this_pixel = get_colour()
@@ -69,6 +113,11 @@ def draw_scene(screen):
             add_single_debug_info(screen, this_pixel, YX)
             screen.refresh()
             time.sleep(0.2)
+
+    ss = shape_drawer.size
+    shape_drawer.set_size(new_size=ss,screen_x = screen.width, screen_y=screen.height)
+    (cf, cb) = get_compliment_of_average()
+    screen.fill_polygon( [shape_drawer.get_points()], colour=cf, bg=cb )
     
     #if we're drawing a single pixel at a time, once we've drawn the screen, stop.
     if single_draw_delay:
@@ -87,6 +136,10 @@ def add_debug_info(screen):
     i=1
     egw = ["red","grn","blu"]
     ee = [redGen, grnGen,  bluGen ]
+    ss="x:{:+2.2f} xi:{:+1.2f} y:{:+2.2f} yi:{:+1.2f} sze {:.2f} sds {} ".format(shape_drawer.lastx, shape_drawer.xincrement,
+                            shape_drawer.lasty, shape_drawer.yinrement,
+                            shape_drawer.size, shape_drawer.sides )
+    screen.print_at(ss, 0 , screen.height-4,colour=7)
     for q in range(3):
         j = ee[q]
         text_str = "{} val: {:.4f} inc: {:.3f} shp: {:.2f} mde: {:1} scl: {:3} off: {:3}".format(egw[q],j.value, 
@@ -97,6 +150,8 @@ def add_debug_info(screen):
     return
 
 def ds(screen):
+    #this is the main execution loop.
+    # it controls the main outside loop and also reads the keys
     verbose = False
     runrun=True
     debug=False
@@ -158,6 +213,11 @@ def setup_OSC(new_ip, new_port):
     disp.map("/red/speed",speed_handler,redGen.set_increment_8bit)
     disp.map("/green/speed",speed_handler,grnGen.set_increment_8bit)
     disp.map("/blue/speed",speed_handler,bluGen.set_increment_8bit)
+
+    disp.map("/shape/sides", standard_handler, shape_drawer.set_sides8bit)
+    disp.map("/shape/size", standard_handler, shape_drawer.set_size8bit)
+    disp.map("/shape/xinc",standard_handler, shape_drawer.set_xincrement8bit)
+    disp.map("/shape/yinc", standard_handler, shape_drawer.set_yincrement8bit)
 
     server = osc_server.ThreadingOSCUDPServer(
             (new_ip,new_port), disp)

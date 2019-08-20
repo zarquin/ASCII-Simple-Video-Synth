@@ -15,7 +15,11 @@ dest = [
     "/green/speed",
     "/blue/scale",
     "/blue/offset",
-    "/blue/speed"
+    "/blue/speed",
+    "/shape/size",
+    "/shape/sides",
+    "/shape/xinc",
+    "/shape/yinc"
 ]
 
 while True:

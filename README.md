@@ -13,6 +13,8 @@ some example videos are here:
 
 
 # OSC Control
+As the system is inspired by 8-bit computers etc, paramater ranges are 0-255, except for mode which is 0-7
+
 `<colours>` = red, green or blue
 
 the synth responds to OSC commands at:
@@ -21,6 +23,11 @@ the synth responds to OSC commands at:
 * `/<colour>/offset`
 * `/<colour>/scale`
 
+The shape drawing paramaters are:
+* `/shape/sides` - The number of sides the shape has.
+* `/shape/size` - The size of the shape.
+* `/shape/xinc` - the rate of increment for the x value.
+* `/shape/yinc` -  the rate of increment for the y value.
 
 There is a TouchOSC control interface.
 it looks like 

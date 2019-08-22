@@ -5,6 +5,14 @@ some example videos are here:
 * https://www.youtube.com/watch?v=DpbKHvXaTRo
 * https://youtu.be/5Qfv_jGQHBA
 
+# Quick Start
+* download/clone the repository
+* install the dependancies.  The main ones are asciimatics, pythonosc and argsparse 
+* open a terminal and type `python3 ASCII-Simple-Video-Synth.py` .  This will start the program in the default state.
+* open a second terminal and type `python3 osc-sender.py` .  This will start sending randomly generated OSC control messages to the drawing process
+
+
+# OSC Control
 `<colours>` = red, green or blue
 
 the synth responds to OSC commands at:

@@ -16,6 +16,7 @@ from pythonosc import osc_server
 import time
 import threading
 import sys
+from random import randint
 
 import argparse
 
@@ -30,7 +31,17 @@ avgBlu = 0
 shape_drawer = ShapePoints(sides=4, xincrement=0.7, yincrement=0.999, size=0.7)
 
 single_draw_delay = False
+strobe_mode = False
+strobe_colour = Screen.COLOUR_WHITE
 
+def global_strobe_handler(unused_addr, args, val):
+    global strobe_mode, strobe_colour
+    strobe_mode=True
+    value = int(val)
+    if value > 255 or value < 0:
+        value = randint (0,255)
+    strobe_colour = value
+    return
 
 def speed_handler(unused_addr, args, val):
     value = int(val)/240.0
@@ -98,13 +109,24 @@ def get_compliment_of_average():
         bg = Screen.COLOUR_BLACK
     else: 
         bg = Screen.COLOUR_WHITE
-
     fg = AASHF.col255_from_RGB(tr,tg,tb)
-
     return (fg , bg)
 
+def draw_strobe(screen):
+    global single_draw_delay, strobe_colour, strobe_mode
+    #frame_reset()
+    for i in range( AASHF.char_count(screen)):
+        bg = strobe_colour
+        YX = AASHF.char_index_to_YX(screen, i)
+        attr=0
+        screen.print_at(" ", YX[1], YX[0],colour=7, attr=attr, bg=bg)
+    screen.refresh()
+    #time.sleep(2.0)
+    strobe_mode=False
+    return
+
 def draw_scene(screen):
-    global single_draw_delay
+    global single_draw_delay, strobe_colour, strobe_mode
     reset_average()
     frame_reset()
     for i in range( AASHF.char_count(screen)):
@@ -129,7 +151,7 @@ def draw_scene(screen):
     ss = shape_drawer.size
     shape_drawer.set_size(new_size=ss,screen_x = screen.width, screen_y=screen.height)
     (cf, cb) = get_compliment_of_average()
-    screen.fill_polygon( [shape_drawer.get_points()], colour=cf, bg=cb )
+    shape_drawer.render_to_screen(screen, cf, cb)
     
     #if we're drawing a single pixel at a time, once we've drawn the screen, stop.
     if single_draw_delay:
@@ -142,6 +164,7 @@ def add_single_debug_info(screen, pixel_value, XY):
     text_str = "colour {:3} R: {:3} G:{:3} B:{:3} X: {:3} Y: {:3} ".format(pixel_value, 
                                 redGen.last_value, grnGen.last_value, bluGen.last_value, XY[1], XY[0])
     screen.print_at(text_str, 0, screen.height-4 ,colour=7 )
+    return
 
 
 def add_debug_info(screen):
@@ -167,12 +190,16 @@ def ds(screen):
     verbose = False
     runrun=True
     debug=False
-    global single_draw_delay
+    global single_draw_delay, strobe_mode
     single_draw_delay = False
 
     while True:
         if runrun:
-            draw_scene(screen)
+            if strobe_mode:
+                draw_strobe(screen)
+                strobe_mode = False
+            else:
+                draw_scene(screen)
             if debug:
                 runrun = False
         if verbose:
@@ -201,7 +228,7 @@ def ds(screen):
         if ev in (ord('f'), ord('F')):
             runrun = True
         
-        time.sleep(0.03)
+        time.sleep(0.01)
     return
 
 
@@ -230,6 +257,12 @@ def setup_OSC(new_ip, new_port):
     disp.map("/shape/size", standard_handler, shape_drawer.set_size8bit)
     disp.map("/shape/xinc",standard_handler, shape_drawer.set_xincrement8bit)
     disp.map("/shape/yinc", standard_handler, shape_drawer.set_yincrement8bit)
+    disp.map("/shape/xcenter", standard_handler, shape_drawer.set_centerx8bit)
+    disp.map("/shape/ycenter", standard_handler, shape_drawer.set_centery8bit)
+    disp.map("/shape/shapecount", standard_handler, shape_drawer.set_shape_count8bit)
+    disp.map("/shape/shapeskip", standard_handler, shape_drawer.set_shape_space8bit)
+
+    disp.map("/global/strobe", global_strobe_handler,"zz")
 
     server = osc_server.ThreadingOSCUDPServer(
             (new_ip,new_port), disp)

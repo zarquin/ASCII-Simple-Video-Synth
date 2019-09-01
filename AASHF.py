@@ -118,6 +118,10 @@ class ShapePoints:
         self.noise = 0.0
         self.screen_x = screen_x
         self.screen_y = screen_y
+        self.centre_x = screen_x/2
+        self.centre_y = screen_y/2
+        self.shape_count = 1
+        self.shape_space = 0
         return
     
     def saw_to_tri(self, arg_val):
@@ -135,6 +139,15 @@ class ShapePoints:
             return ( 1.0 - (arg_val -1.0)  )
 
         return arg_val
+
+    def render_to_screen(self, the_screen, cf, cb):
+        #cf is colour foreground, 
+        # cb is colour background.
+        for i in range(self.shape_count):
+            the_screen.fill_polygon( [self.get_points()], colour=cf, bg=cb )
+            for j in range(self.shape_space):
+                self.update_points()
+
 
     def update_points(self):
         #this is a dumb triangle wave oscillator 
@@ -156,8 +169,8 @@ class ShapePoints:
 
     def points_to_screen_locations(self):
         #this returns an x y tuple in relation to the size of the screen
-        xc = self.screen_x/2
-        yc = self.screen_y/2
+        xc = self.centre_x
+        yc = self.centre_y
 
         max_x = int((self.screen_x/2) * self.size )
         max_y = int((self.screen_y/2) * self.size )
@@ -177,12 +190,45 @@ class ShapePoints:
             ret_val.append(self.points_to_screen_locations())
         return ret_val
 
+    def set_shape_count8bit(self, new_value):
+        if new_value  > 255:
+            new_value = 255
+        if new_value <0:
+            new_value = 0
+        self.shape_count = int(new_value/25)
+        return
+    
+    def set_shape_space8bit(self, new_value):
+        if new_value > 255:
+            new_value = 255
+        if new_value < 0:
+            new_value = 0
+        
+        self.shape_space = int( new_value/50)
+        return
 
     def set_xincrement8bit(self, new_inc):
         
         incval = new_inc/ 127.0
         self.set_xincrement(incval)
         return
+
+    def set_centerx8bit(self, new_value):
+        if new_value < 0 :
+            new_value = 0
+        if new_value > 255:
+            new_value = 255
+        self.centre_x = int( self.screen_x* new_value/255)
+        return
+    
+    def set_centery8bit(self, new_value):
+        if new_value < 0 :
+            new_value = 0
+        if new_value > 255:
+            new_value = 255
+        self.centre_x = int( self.screen_y* new_value/255)
+        return
+
 
     def set_xincrement(self, new_xinc):      
         if new_xinc < 0:

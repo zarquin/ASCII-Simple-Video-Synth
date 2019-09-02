@@ -228,7 +228,7 @@ def ds(screen):
         if ev in (ord('f'), ord('F')):
             runrun = True
         
-        time.sleep(0.01)
+        #time.sleep(0.02)
     return
 
 

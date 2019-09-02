@@ -326,9 +326,9 @@ class Generator:
             return shaped
     
     def calculate_and_limit(self):
-        ret_val = 0
-        ret_val = int(self.get_shaped_value() * self.scale)
-        ret_val = ret_val+self.offset
+        #ret_val = 0
+        ret_val = int(self.get_shaped_value() * self.scale)+self.offset
+        #ret_val = ret_val+self.offset
         if ret_val > 255:
             ret_val = 255
         if ret_val <0:

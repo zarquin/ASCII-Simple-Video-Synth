@@ -1,5 +1,7 @@
 # ASCII-Simple-Video-Synth
 A simple video synth for Consoles, controlled by OSC
+This is powered by the Asciimatics library.  
+* https://github.com/peterbrittain/asciimatics
 
 some example videos are here:
 * https://www.youtube.com/watch?v=DpbKHvXaTRo
@@ -11,6 +13,8 @@ some example videos are here:
 * open a terminal and type `python3 ASCII-Simple-Video-Synth.py` .  This will start the program in the default state.
 * open a second terminal and type `python3 osc-sender.py` .  This will start sending randomly generated OSC control messages to the drawing process
 
+# Drawing performance
+Make sure you have the latest Asciimatics library.  (currently v1.11)  There was a big performance increase after v1.9
 
 # OSC Control
 As the system is inspired by 8-bit computers etc, paramater ranges are 0-255, except for mode which is 0-7

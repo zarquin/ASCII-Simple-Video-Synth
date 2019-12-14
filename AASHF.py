@@ -5,6 +5,7 @@ zarquin@ucc.asn.au
 See LICENSE for licence details
 """
 import time, os, math
+#from fastnumbers import int, fast_int
 
 def col255_from_RGB(red,green,blue):
     """ returns a term256 colour index from RGB value
@@ -317,17 +318,22 @@ class Generator:
         self.value = new_value
         self.run=True
         return
-
+ #   @profile
     def get_shaped_value(self):
         if self.value < self.shape:
             return self.value / self.shape
         else:
-            shaped = 1 - ((self.value - self.shape)* ( 1. / (1.-self.shape) ) )
-            return shaped
+            return (1. - ((self.value - self.shape)/ (1.-self.shape) ))
+ #           shaped = 1 - ((self.value - self.shape)* ( 1. / (1.-self.shape) ) )
+ #           return shaped
     
+ #   @profile
     def calculate_and_limit(self):
         #ret_val = 0
-        ret_val = int(self.get_shaped_value() * self.scale)+self.offset
+        #ret_val = int(self.get_shaped_value() * self.scale)+self.offset
+        aa = self.get_shaped_value() * self.scale
+        #ret_val = fast_int(aa, raise_on_invalid=True) + self.offset
+        ret_val = int(aa)+self.offset
         #ret_val = ret_val+self.offset
         if ret_val > 255:
             ret_val = 255
@@ -336,6 +342,7 @@ class Generator:
         self.last_value = ret_val
         return ret_val
 
+   # @profile
     def next(self):
 
         if self.run is False:

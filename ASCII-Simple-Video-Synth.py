@@ -17,6 +17,10 @@ import time
 import threading
 import sys
 from random import randint
+import cProfile
+import code
+import signal
+signal.signal(signal.SIGUSR2, lambda sig, frame: code.interact())
 
 import argparse
 
@@ -28,11 +32,15 @@ avgGrn = 0
 avgRed = 0
 avgBlu = 0
 
+debug = False
+verbose = False
+
 shape_drawer = ShapePoints(sides=4, xincrement=0.7, yincrement=0.999, size=0.7)
 
 single_draw_delay = False
 strobe_mode = False
 strobe_colour = Screen.COLOUR_WHITE
+#frame_time=30
 
 def global_strobe_handler(unused_addr, args, val):
     global strobe_mode, strobe_colour
@@ -53,6 +61,7 @@ def standard_handler(unused_addr, args, val):
     args[0](value)
     return
 
+#@profile
 def get_colour():
     global avgBlu, avgGrn, avgRed
     red = int(redGen.next() )
@@ -125,6 +134,7 @@ def draw_strobe(screen):
     strobe_mode=False
     return
 
+#@profile
 def draw_scene(screen):
     global single_draw_delay, strobe_colour, strobe_mode
     reset_average()
@@ -166,15 +176,16 @@ def add_single_debug_info(screen, pixel_value, XY):
     screen.print_at(text_str, 0, screen.height-4 ,colour=7 )
     return
 
-
 def add_debug_info(screen):
+    global framerate
     i=1
     egw = ["red","grn","blu"]
     ee = [redGen, grnGen,  bluGen ]
-    ss="x:{:+2.2f} xi:{:+1.2f} y:{:+2.2f} yi:{:+1.2f} sze {:.2f} sds {} ".format(shape_drawer.lastx, shape_drawer.xincrement,
+    ss="x:{:+2.2f} xi:{:+1.2f} y:{:+2.2f} yi:{:+1.2f} sze {:.2f} sds {} fr {:.1f}".format(shape_drawer.lastx, shape_drawer.xincrement,
                             shape_drawer.lasty, shape_drawer.yinrement,
-                            shape_drawer.size, shape_drawer.sides )
+                            shape_drawer.size, shape_drawer.sides, framerate )
     screen.print_at(ss, 0 , screen.height-4,colour=7)
+
     for q in range(3):
         j = ee[q]
         text_str = "{} val: {:.4f} inc: {:.3f} shp: {:.2f} mde: {:1} scl: {:3} off: {:3}".format(egw[q],j.value, 
@@ -187,13 +198,17 @@ def add_debug_info(screen):
 def ds(screen):
     #this is the main execution loop.
     # it controls the main outside loop and also reads the keys
-    verbose = False
-    runrun=True
-    debug=False
-    global single_draw_delay, strobe_mode
+    global verbose
+    #verbose = False
+    runrun = True
+    global debug
+    #debug = False
+    global single_draw_delay, strobe_mode, frame_time, framerate
     single_draw_delay = False
+    framerate=1.0
 
     while True:
+        time_frame_start = time.time()
         if runrun:
             if strobe_mode:
                 draw_strobe(screen)
@@ -228,6 +243,12 @@ def ds(screen):
         if ev in (ord('f'), ord('F')):
             runrun = True
         
+        time_delta = (time.time()-time_frame_start)
+        if(time_delta < frame_time):
+            diff = frame_time - time_delta
+            time.sleep(diff)
+        
+        framerate = 1.0/(time.time() - time_frame_start)
         #time.sleep(0.02)
     return
 
@@ -244,15 +265,12 @@ def setup_OSC(new_ip, new_port):
     disp.map("/green/scale", standard_handler, grnGen.set_scale)
     disp.map("/blue/offset", standard_handler, bluGen.set_offset)
     disp.map("/blue/scale", standard_handler, bluGen.set_scale)
-
     disp.map("/blue/shape", standard_handler, bluGen.set_shape_8bit)
     disp.map("/green/shape", standard_handler, grnGen.set_shape_8bit)
     disp.map("/red/shape", standard_handler, redGen.set_shape_8bit)
-
     disp.map("/red/speed",speed_handler,redGen.set_increment_8bit)
     disp.map("/green/speed",speed_handler,grnGen.set_increment_8bit)
     disp.map("/blue/speed",speed_handler,bluGen.set_increment_8bit)
-
     disp.map("/shape/sides", standard_handler, shape_drawer.set_sides8bit)
     disp.map("/shape/size", standard_handler, shape_drawer.set_size8bit)
     disp.map("/shape/xinc",standard_handler, shape_drawer.set_xincrement8bit)
@@ -261,7 +279,6 @@ def setup_OSC(new_ip, new_port):
     disp.map("/shape/ycenter", standard_handler, shape_drawer.set_centery8bit)
     disp.map("/shape/shapecount", standard_handler, shape_drawer.set_shape_count8bit)
     disp.map("/shape/shapeskip", standard_handler, shape_drawer.set_shape_space8bit)
-
     disp.map("/global/strobe", global_strobe_handler,"zz")
 
     server = osc_server.ThreadingOSCUDPServer(
@@ -270,19 +287,31 @@ def setup_OSC(new_ip, new_port):
     server_thread.start()
     return server, server_thread
 
-
-
-if __name__ == "__main__":
+def main():
+    global frame_time
+    global debug
+    global verbose
     parser = argparse.ArgumentParser()
+    parser.add_argument("-d","--debug",action='store_true' , help="debug mode for Step")
+    parser.add_argument("-v","--verbose",action='store_true' , help="display rendering information")
     parser.add_argument("--ip", default="127.0.0.1",
       help="The ip of the OSC server")
     parser.add_argument("--port", type=int, default=8000,
-      help="The port the OSC server is listening on")
+      help="The port the OSC server is listening on")  
+    parser.add_argument("--framerate", type=int, default=30,
+      help="the max framerate to use" )
     args = parser.parse_args()
-
+    frame_time = 1.0/args.framerate
+    debug = args.debug
+    verbose = args.verbose
     s = setup_OSC(args.ip, args.port)
     Screen.wrapper(ds)
     s[0].shutdown()
     quit()
+
+
+if __name__ == "__main__":
+    cProfile.run(main())
+
 
 

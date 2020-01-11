@@ -24,7 +24,8 @@ dest = [
     "/shape/ycenter",
     "/shape/shapecount",
     "/shape/shapeskip",
-    "/global/strobe"
+    "/global/strobe",
+    "/global/invert"
 ]
 
 def random_test():

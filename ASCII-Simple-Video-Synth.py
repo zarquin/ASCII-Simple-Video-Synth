@@ -40,7 +40,21 @@ shape_drawer = ShapePoints(sides=4, xincrement=0.7, yincrement=0.999, size=0.7)
 single_draw_delay = False
 strobe_mode = False
 strobe_colour = Screen.COLOUR_WHITE
+invert_count = 0
 #frame_time=30
+
+def global_invert_handler(unused_addr, args, val):
+    global invert_count
+    #if we're already in invert mode, don't set it.
+    if invert_count > 0:
+        return
+    invert_count = int(val)
+    #this is an arbitrary limit to the number of invert frames. not sure what number really makes sense.
+    if invert_count > 20:
+        invert_count =20
+    if invert_count <1:
+        invert_count =1
+    return
 
 def global_strobe_handler(unused_addr, args, val):
     global strobe_mode, strobe_colour
@@ -136,9 +150,13 @@ def draw_strobe(screen):
 
 #@profile
 def draw_scene(screen):
-    global single_draw_delay, strobe_colour, strobe_mode
+    global single_draw_delay, strobe_colour, strobe_mode, invert_count
     reset_average()
     frame_reset()
+    if invert_count>0:
+        redGen.set_invert()
+        bluGen.set_invert()
+        grnGen.set_invert()
     for i in range( AASHF.char_count(screen)):
         this_pixel = get_colour()
         YX = AASHF.char_index_to_YX(screen, i)
@@ -163,6 +181,15 @@ def draw_scene(screen):
     (cf, cb) = get_compliment_of_average()
     shape_drawer.render_to_screen(screen, cf, cb)
     
+    #if we've had an global invert, remove it.
+    invert_count=invert_count-1
+    if invert_count<1:
+        #this is going to get hit all the time when not in invert_mode.
+        invert_count=0
+        redGen.clear_invert()
+        bluGen.clear_invert()
+        grnGen.clear_invert()
+
     #if we're drawing a single pixel at a time, once we've drawn the screen, stop.
     if single_draw_delay:
         single_draw_delay = False
@@ -268,6 +295,9 @@ def setup_OSC(new_ip, new_port):
     disp.map("/blue/shape", standard_handler, bluGen.set_shape_8bit)
     disp.map("/green/shape", standard_handler, grnGen.set_shape_8bit)
     disp.map("/red/shape", standard_handler, redGen.set_shape_8bit)
+    disp.map("/red/speed512",standard_handler,redGen.set_increment_9bit)
+    disp.map("/green/speed512",standard_handler,grnGen.set_increment_9bit)
+    disp.map("/blue/speed512",standard_handler,bluGen.set_increment_9bit)
     disp.map("/red/speed",speed_handler,redGen.set_increment_8bit)
     disp.map("/green/speed",speed_handler,grnGen.set_increment_8bit)
     disp.map("/blue/speed",speed_handler,bluGen.set_increment_8bit)
@@ -280,6 +310,7 @@ def setup_OSC(new_ip, new_port):
     disp.map("/shape/shapecount", standard_handler, shape_drawer.set_shape_count8bit)
     disp.map("/shape/shapeskip", standard_handler, shape_drawer.set_shape_space8bit)
     disp.map("/global/strobe", global_strobe_handler,"zz")
+    disp.map("/global/invert", global_invert_handler,"zz")
 
     server = osc_server.ThreadingOSCUDPServer(
             (new_ip,new_port), disp)

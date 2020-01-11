@@ -227,7 +227,7 @@ class ShapePoints:
             new_value = 0
         if new_value > 255:
             new_value = 255
-        self.centre_x = int( self.screen_y* new_value/255)
+        self.centre_y = int( self.screen_y* new_value/255)
         return
 
 
@@ -312,6 +312,19 @@ class Generator:
         self.mode = mode
         self.run = True
         self.last_value = 0.0
+        self.invert = False
+        return
+
+    def nudge(self, nudge_value):
+        #nudge is meant to be for small value changes. 0.01 and smaller. we won't do any checking here though.
+        self.increment=self.increment+float(nudge_value)
+        return
+
+    def set_invert(self):
+        self.invert=True
+        return
+    def clear_invert(self):
+        self.invert=False
         return
 
     def reset(self, new_value=0):
@@ -335,6 +348,9 @@ class Generator:
         #ret_val = fast_int(aa, raise_on_invalid=True) + self.offset
         ret_val = int(aa)+self.offset
         #ret_val = ret_val+self.offset
+        #If we're inverting, do it here.
+        if self.invert:
+            ret_val = 255-ret_val
         if ret_val > 255:
             ret_val = 255
         if ret_val <0:
@@ -395,6 +411,19 @@ class Generator:
         self.offset = new_offset
         return
 
+    def set_increment_9bit(self, new_increment):
+        if new_increment > 512:
+            new_increment = 512
+        if new_increment < 0:
+            new_increment = 0.001
+
+        #new_increment+=1.
+        #jif = math.log(new_increment,512)
+        jif = new_increment/512.
+        jif = abs(jif)
+        self.increment = jif
+        return
+
     def set_increment_8bit(self,new_increment):
         # this is for setting the increment using a 0-255 bit value.
         if new_increment > 255:
@@ -407,8 +436,7 @@ class Generator:
         jif = abs(jif)
         self.increment = jif
         return
-
-        
+       
     def set_shape_8bit(self, new_shape):
 
         if new_shape > 255:
@@ -420,8 +448,6 @@ class Generator:
         if self.shape >=1.0:
             self.shape =0.999
         return
-
-
 
     def set_increment(self, new_increment):
         #increment has to be less than 2.0

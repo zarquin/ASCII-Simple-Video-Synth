@@ -135,8 +135,42 @@ def draw_strobe(screen):
     return
 
 #@profile
-def draw_scene(screen):
+
+def draw_scene2(screen):
+    #refactor to see if writing line-by-line is more performant
     global single_draw_delay, strobe_colour, strobe_mode
+    reset_average()
+    frame_reset()
+    for i in range (screen.height): #get line count):
+        line_reset()
+        cm=[] #new empty list for colour_map
+        st="" #new empty string
+        for j in range (screen.width): #get width):
+            this_pixel = get_colour()
+            ch=''
+            if draw_foreground:
+                fg=this_pixel
+                attr=0
+                bg=0
+                ch="\u2588"
+            else:
+                bg=this_pixel
+                attr=0
+                fg=7
+                ch=" "
+            cm.append( (fg,attr,bg))
+            st=''.join((st,ch))
+        screen.paint(st, 0,i, colour_map= cm) 
+
+    ss = shape_drawer.size
+    shape_drawer.set_size(new_size=ss, screen_x=screen.width, screen_y=screen.height)
+    (cf, cb) = get_compliment_of_average()
+    shape_drawer.render_to_screen(screen, cf, cb)
+    screen.refresh()
+    return
+
+def draw_scene(screen):
+    global single_draw_delay, strobe_colour, strobe_mode, draw_foreground
     reset_average()
     frame_reset()
     for i in range( AASHF.char_count(screen)):
@@ -151,7 +185,10 @@ def draw_scene(screen):
             # we need to extract both the colour value and intensity separately
             bg = this_pixel >> 1
             attr = this_pixel & 1
-        screen.print_at(" ", YX[1], YX[0],colour=7, attr=attr, bg=bg)
+        if draw_foreground:
+            screen.print_at("\u2588",YX[1], YX[0], colour=bg)
+        else:
+            screen.print_at(" ", YX[1], YX[0],colour=7, attr=attr, bg=bg)
         if single_draw_delay:
             add_debug_info(screen)
             add_single_debug_info(screen, this_pixel, YX)
@@ -204,6 +241,7 @@ def ds(screen):
     global debug
     #debug = False
     global single_draw_delay, strobe_mode, frame_time, framerate
+    global draw_method, draw_foreground
     single_draw_delay = False
     framerate=1.0
 
@@ -214,7 +252,10 @@ def ds(screen):
                 draw_strobe(screen)
                 strobe_mode = False
             else:
-                draw_scene(screen)
+                if draw_method==1:
+                    draw_scene(screen)
+                else:
+                    draw_scene2(screen)
             if debug:
                 runrun = False
         if verbose:
@@ -291,6 +332,8 @@ def main():
     global frame_time
     global debug
     global verbose
+    global draw_method
+    global draw_foreground
     parser = argparse.ArgumentParser()
     parser.add_argument("-d","--debug",action='store_true' , help="debug mode for Step")
     parser.add_argument("-v","--verbose",action='store_true' , help="display rendering information")
@@ -300,10 +343,17 @@ def main():
       help="The port the OSC server is listening on")  
     parser.add_argument("--framerate", type=int, default=30,
       help="the max framerate to use" )
+    parser.add_argument("--drawmethod", type=int, default=1, 
+        help="which draw process to use, 1 or 2")
+    parser.add_argument("--foreground", action='store_true', help="draw colour in forground or background")
+    
     args = parser.parse_args()
     frame_time = 1.0/args.framerate
     debug = args.debug
     verbose = args.verbose
+    draw_method = args.drawmethod
+    draw_foreground = args.foreground
+
     s = setup_OSC(args.ip, args.port)
     Screen.wrapper(ds)
     s[0].shutdown()
@@ -311,7 +361,8 @@ def main():
 
 
 if __name__ == "__main__":
-    cProfile.run(main())
+    main()
+    #cProfile.run(main())
 
 
 

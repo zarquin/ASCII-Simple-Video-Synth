@@ -9,7 +9,7 @@ some example videos are here:
 
 # Quick Start
 * download/clone the repository
-* install the dependancies.  The main ones are asciimatics, pythonosc and argsparse 
+* install the dependencies.  The main ones are asciimatics, python-osc and argparse. This should do the job: `pip3 install setuptools argparse asciimatics python-osc`
 * open a terminal and type `python3 ASCII-Simple-Video-Synth.py` .  This will start the program in the default state.
 * open a second terminal and type `python3 osc-sender.py` .  This will start sending randomly generated OSC control messages to the drawing process
 

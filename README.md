@@ -6,6 +6,9 @@ This is powered by the Asciimatics library.
 some example videos are here:
 * https://www.youtube.com/watch?v=DpbKHvXaTRo
 * https://youtu.be/5Qfv_jGQHBA
+* https://www.youtube.com/watch?v=q_SpTtVea8w
+
+* https://www.youtube.com/watch?v=1EYZJU6Zhn4  (Live visuals for a Chr15m & Fenris set)
 
 # Quick Start
 * download/clone the repository

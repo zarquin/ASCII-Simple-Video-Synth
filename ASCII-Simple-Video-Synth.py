@@ -19,8 +19,6 @@ import sys
 from random import randint
 import cProfile
 import code
-import signal
-signal.signal(signal.SIGUSR2, lambda sig, frame: code.interact())
 
 import argparse
 
@@ -118,7 +116,12 @@ def get_compliment_of_average():
         bg = Screen.COLOUR_BLACK
     else: 
         bg = Screen.COLOUR_WHITE
-    fg = AASHF.col255_from_RGB(tr,tg,tb)
+    fg = 0
+    if sys.platform == "win32":
+      fg = AASHF.col15_from_RGB(tr, tg, tb)
+      fg = fg >> 1
+    else:
+      fg = AASHF.col255_from_RGB(tr, tg, tb)
     return (fg , bg)
 
 def draw_strobe(screen):
